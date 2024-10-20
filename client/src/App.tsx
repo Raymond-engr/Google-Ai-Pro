@@ -16,6 +16,7 @@ const App: React.FC = () => {
           <SkeletonLoader height="40px" count={2}/>
           <SkeletonLoader height="120px" />
           <SkeletonLoader height="40px" count={6}/>
+          <SkeletonLoader height="120px" />
         </div>}>
           <Routes>
             <Route index element={<AllPage />} />
