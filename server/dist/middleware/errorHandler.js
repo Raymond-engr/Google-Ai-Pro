@@ -17,7 +17,7 @@ const errorHandler = (err, req, res, next) => {
         });
     }
     else if (process.env.NODE_ENV === 'production') {
-        const error = Object.assign({}, err);
+        const error = { ...err };
         error.message = err.message;
         if (error.isOperational) {
             res.status(err.statusCode).json({

@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -19,19 +10,18 @@ const saveToMongoDB_1 = require("../helpers/saveToMongoDB");
 const logger_1 = __importDefault(require("../utils/logger"));
 const customErrors_1 = require("../utils/customErrors");
 const searchModel_1 = __importDefault(require("../models/searchModel"));
-exports.getSearch = (0, asyncHandler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+exports.getSearch = (0, asyncHandler_1.default)(async (req, res) => {
     const { q } = req.validatedQuery;
     logger_1.default.info(`Received search query: ${q}`);
     const query = q;
-    const existingSearch = yield searchModel_1.default.findOne({ title: query });
+    const existingSearch = await searchModel_1.default.findOne({ title: query });
     if (existingSearch) {
         logger_1.default.info(`Cache hit for query: ${query}`);
         return res.status(200).json({ success: true, data: [existingSearch], cached: true });
     }
     try {
         logger_1.default.info(`Making request to Gemini API for query: ${query}`);
-        const aiResponse = yield (0, geminiService_1.generateResponse)(query);
+        const aiResponse = await (0, geminiService_1.generateResponse)(query);
         const dataToSave = {
             title: query,
             content: aiResponse,
@@ -39,13 +29,13 @@ exports.getSearch = (0, asyncHandler_1.default)((req, res) => __awaiter(void 0, 
             createdAt: new Date()
         };
         logger_1.default.info(`Saving search result to database for query: ${query}`);
-        const savedSearch = yield (0, saveToMongoDB_1.saveToMongoDB)(dataToSave);
+        const savedSearch = await (0, saveToMongoDB_1.saveToMongoDB)(dataToSave);
         res.status(200).json({ success: true, data: [savedSearch], cached: false });
     }
     catch (error) {
         if (error instanceof customErrors_1.GeminiAPIError && error.statusCode === 429) {
             logger_1.default.error(`Rate limit exceeded for query: ${query}`);
-            if ((_a = error.details) === null || _a === void 0 ? void 0 : _a.retryAfter) {
+            if (error.details?.retryAfter) {
                 throw new customErrors_1.RateLimitError('Gemini API rate limit exceeded', error.details.retryAfter);
             }
             else {
@@ -61,4 +51,4 @@ exports.getSearch = (0, asyncHandler_1.default)((req, res) => __awaiter(void 0, 
             throw new Error(`Failed to process search query: ${error.message}`);
         }
     }
-}));
+});
