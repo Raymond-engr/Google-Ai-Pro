@@ -4,7 +4,9 @@ import Footer from '../components/Footer';
 import NavBar from '../components/Navbar';
 
 const AllPage: React.FC = () => {
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState<boolean>(
+    () => window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+  );
   const removeChange = true;
   
   useEffect(() => {
